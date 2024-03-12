@@ -22,6 +22,9 @@ export class Product {
 
   @Prop({ required: true })
   image: string;
+
+  @Prop({ default: 0 })
+  likes: number;
 }
 
 export const ProductSchema = SchemaFactory.createForClass(Product);

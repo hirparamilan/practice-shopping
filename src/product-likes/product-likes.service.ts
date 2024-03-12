@@ -1,5 +1,5 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
-import { CreateProductLikeDto } from './dto/create-product-like.dto';
+import { ProductLikeDto } from './dto/create-product-like.dto';
 import { UpdateProductLikeDto } from './dto/update-product-like.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import {
@@ -7,19 +7,46 @@ import {
   ProductLikeDocument,
 } from './entities/product-like.entity';
 import { Model } from 'mongoose';
-import { ProductDocument } from 'src/products/entities/product.entity';
+import { Product, ProductDocument } from 'src/products/entities/product.entity';
 
 @Injectable()
 export class ProductLikesService {
   constructor(
     @InjectModel(ProductLike.name)
     private productLikeModel: Model<ProductLikeDocument>,
+
+    @InjectModel(Product.name)
+    private productModel: Model<ProductDocument>,
   ) {}
 
-  async create(userId, createProductLikeDto: CreateProductLikeDto) {
-    createProductLikeDto.userId = userId;
-    const createdProductLike = new this.productLikeModel(createProductLikeDto);
+  async create(userId, productLikeDto) {
+    var productLike = await this.productLikeModel.findOne({
+      userId: userId,
+      productId: productLikeDto.productId,
+    });
+
+    if (productLike) {
+      return {
+        status: HttpStatus.BAD_REQUEST,
+        message: 'Product already liked',
+      };
+    }
+
+    productLikeDto.userId = userId;
+    const createdProductLike = new this.productLikeModel(productLikeDto);
     await createdProductLike.save();
+
+    await this.productModel
+      .findByIdAndUpdate(productLikeDto.productId, { $inc: { likes: 1 } })
+      .exec();
+
+    // var product = await this.productModel.findById(
+    //   productLikeDto.productId,
+    // );
+    // product.likes += 1;
+    // await this.productModel
+    //   .findByIdAndUpdate(productLikeDto.productId, {product})
+    //   .exec();
 
     // const createdProduct = await this.productModel.create(createProductDto);
     return {
@@ -29,45 +56,73 @@ export class ProductLikesService {
     };
   }
 
-  async findAll(userId, email) {
-    console.log('userId = ' + userId);
+  async findAll(usrId, email) {
+    console.log('userId = ' + usrId);
     console.log('email = ' + email);
     const data = await this.productLikeModel
       .aggregate([
-        { $match: { userId: userId } },
+        { $match: { userId: usrId } },
         {
           $lookup: {
             from: 'users', // collection name in db
-            let: { userId: '$_id' },
+            let: { uId: '$userId' },
             pipeline: [
               //searching [searchId] value equals your field [_id]
-              { $match: { $expr: [{ _id: '$$userId' }] } },
+              // { $match: { $expr: [{ _id: { $toObjectId: '$$uId' } }] } },
+              {
+                $match: {
+                  $expr: {
+                    $and: [{ $eq: ['$_id', { $toObjectId: '$$uId' }] }],
+                  },
+                },
+              },
               //projecting only fields you reaaly need, otherwise you will store all - huge data loads
             ],
             as: 'user',
           },
         },
         {
+          $unwind: '$user',
+        },
+        {
           $lookup: {
             from: 'products', // collection name in db
-            let: { productId: '$_id' },
+            let: { pId: '$productId' },
             pipeline: [
-              //searching [searchId] value equals your field [_id]
-              { $match: { $expr: [{ _id: '$$productId' }] } },
-              //projecting only fields you reaaly need, otherwise you will store all - huge data loads
+              {
+                $match: {
+                  $expr: {
+                    $and: [{ $eq: ['$_id', { $toObjectId: '$$pId' }] }],
+                  },
+                },
+              },
             ],
             as: 'product',
           },
         },
-        // {
-        //   $project: {
-        //     'product.name': 1,
-        //     'product.description': 1,
-        //     'product.category': 1,
-        //     'product.amount': 1,
-        //     'product.image': 1,
-        //   },
-        // },
+        {
+          $unwind: '$product',
+        },
+        {
+          $project: {
+            _id: 1,
+            userId: 1,
+            productId: 1,
+            // user: 1,
+            // product: 1,
+            user: {
+              name: 1,
+              email: 1,
+            },
+            product: {
+              name: 1,
+              description: 1,
+              category: 1,
+              amount: 1,
+              image: 1,
+            },
+          },
+        },
       ])
       .exec();
     return {
@@ -75,7 +130,7 @@ export class ProductLikesService {
       data: data,
       message: 'Data retrived successfully',
     };
-    return `This action returns all productLikes`;
+    // return `This action returns all productLikes`;
   }
 
   async findExact(
@@ -95,7 +150,31 @@ export class ProductLikesService {
     return `This action updates a #${id} productLike`;
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} productLike`;
+  async remove(userId, productLikeDto) {
+    console.log('userId : ' + userId);
+    console.log('productId : ' + productLikeDto.productId);
+
+    var productLike = await this.productLikeModel.findOne({
+      userId: userId,
+      productId: productLikeDto.productId,
+    });
+
+    if (!productLike) {
+      return {
+        status: HttpStatus.BAD_REQUEST,
+        message: 'Product not liked',
+      };
+    }
+
+    await this.productLikeModel.findByIdAndDelete(productLike._id).exec();
+
+    await this.productModel
+      .findByIdAndUpdate(productLikeDto.productId, { $inc: { likes: -1 } })
+      .exec();
+
+    return {
+      status: HttpStatus.OK,
+      message: 'Product DisLiked Successfully',
+    };
   }
 }

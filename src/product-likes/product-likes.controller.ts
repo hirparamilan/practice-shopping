@@ -10,7 +10,7 @@ import {
   Request,
 } from '@nestjs/common';
 import { ProductLikesService } from './product-likes.service';
-import { CreateProductLikeDto } from './dto/create-product-like.dto';
+import { ProductLikeDto } from './dto/create-product-like.dto';
 import { UpdateProductLikeDto } from './dto/update-product-like.dto';
 import { AccessTokenGuard } from 'src/auth/lib/accessToken.guard';
 
@@ -20,14 +20,14 @@ export class ProductLikesController {
 
   @Post('create')
   @UseGuards(AccessTokenGuard)
-  create(@Request() req, @Body() createProductLikeDto: CreateProductLikeDto) {
-    return this.productLikesService.create(req.user.sub, createProductLikeDto);
+  create(@Request() req, @Body() productLikeDto: ProductLikeDto) {
+    return this.productLikesService.create(req.user.id, productLikeDto);
   }
 
   @Get()
   @UseGuards(AccessTokenGuard)
   findAll(@Request() req) {
-    return this.productLikesService.findAll(req.user.sub, req.user.email);
+    return this.productLikesService.findAll(req.user.id, req.user.email);
   }
 
   @Get(':id')
@@ -43,8 +43,10 @@ export class ProductLikesController {
     return this.productLikesService.update(+id, updateProductLikeDto);
   }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.productLikesService.remove(+id);
+  // @Delete(':id')
+  @Post('remove')
+  @UseGuards(AccessTokenGuard)
+  remove(@Request() req, @Body() productLikeDto: ProductLikeDto) {
+    return this.productLikesService.remove(req.user.id, productLikeDto);
   }
 }

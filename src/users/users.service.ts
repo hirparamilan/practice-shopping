@@ -15,11 +15,16 @@ export class UsersService {
   }
 
   async findAll(): Promise<UserDocument[]> {
-    return this.userModel.find().exec();
+    return this.userModel
+      .find()
+      .select(['-password', '-refreshToken', '-__v'])
+      .exec();
   }
 
   async findById(id: string): Promise<UserDocument> {
-    return this.userModel.findById(id);
+    return this.userModel
+      .findById(id)
+      .select(['-password', '-refreshToken', '-__v']);
   }
 
   async findByEmail(email: string): Promise<UserDocument> {

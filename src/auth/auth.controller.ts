@@ -5,6 +5,7 @@ import {
   HttpCode,
   HttpStatus,
   Post,
+  Query,
   Req,
   Res,
   UseGuards,
@@ -12,7 +13,7 @@ import {
 import { Request } from 'express';
 import { CreateUserDto } from 'src/users/dto/create-user.dto';
 import { AuthService } from './auth.service';
-import { AuthDto } from './dto/auth.dto';
+// import { AuthDto } from './dto/auth.dto';
 import { AccessTokenGuard } from 'src/auth/lib/accessToken.guard';
 import { Response } from 'express';
 
@@ -21,18 +22,22 @@ export class AuthController {
   constructor(private authService: AuthService) {}
 
   @Post('signup')
-  signup(@Body() createUserDto: CreateUserDto) {
-    return this.authService.signUp(createUserDto);
+  signup(
+    @Query('Email') email: string,
+    @Query('Password') password: string,
+    @Query('Name') name: string,
+  ) {
+    return this.authService.signUp(email, password, name);
   }
 
   @Post('signin')
-  signin(@Body() data: AuthDto) {
-    return this.authService.signIn(data);
+  signin(@Query('Email') email: string, @Query('Password') password: string) {
+    return this.authService.signIn(email, password);
   }
 
   @UseGuards(AccessTokenGuard)
   @Get('logout')
   logout(@Req() req: Request, @Res() response: Response) {
-    this.authService.logout(req.user['sub'], response);
+    this.authService.logout(req.user['id'], response);
   }
 }

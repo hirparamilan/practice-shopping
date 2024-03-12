@@ -62,9 +62,9 @@ export class ProductsController {
   @Get('get-products')
   @UseGuards(AccessTokenGuard)
   findAll(@Request() req) {
-    // console.log('req user sub = ' + req.user.sub);
+    // console.log('req user sub = ' + req.user.id);
     // console.log('req user email = ' + req.user.email);
-    return this.productsService.findAll(req.user.sub);
+    return this.productsService.findAll(req.user.id);
   }
 
   @Get(':id')

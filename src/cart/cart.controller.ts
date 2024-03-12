@@ -21,7 +21,7 @@ export class CartController {
   @Post('add')
   @UseGuards(AccessTokenGuard)
   create(@Req() req, @Body() createCartDto: CreateCartDto) {
-    return this.cartService.create(req.user.sub, createCartDto);
+    return this.cartService.create(req.user.id, createCartDto);
   }
 
   @Get()
@@ -37,7 +37,7 @@ export class CartController {
   @Get('get')
   @UseGuards(AccessTokenGuard)
   findOne(@Req() req) {
-    return this.cartService.findOne(req.user.sub);
+    return this.cartService.findOne(req.user.id);
   }
 
   @Patch(':id')
@@ -48,6 +48,6 @@ export class CartController {
   @Post('remove')
   @UseGuards(AccessTokenGuard)
   remove(@Req() req, @Body() createCartDto: CreateCartDto) {
-    return this.cartService.remove(req.user.sub, createCartDto);
+    return this.cartService.remove(req.user.id, createCartDto);
   }
 }

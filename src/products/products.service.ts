@@ -54,16 +54,17 @@ export class ProductsService {
           $lookup: {
             from: 'productlikes',
             let: {
-              productId: '$_id',
-              userId: userId,
+              pId: '$_id',
+              uId: userId,
             }, // collection name in db
             pipeline: [
               {
                 $match: {
                   $expr: {
                     $and: [
-                      { $eq: [{ $toObjectId: '$productId' }, '$$productId'] },
-                      { $eq: ['$userId', '$$userId'] },
+                      // { $eq: [{ $toObjectId: '$productId' }, '$$pId'] },
+                      { $eq: ['$productId', { $toString: '$$pId' }] },
+                      { $eq: ['$userId', '$$uId'] },
                     ],
                   },
                 },
