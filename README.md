@@ -1,4 +1,4 @@
-## nest-crud-jwt-access-refresh-product-like-cart
+## Shopping demo project
 
 Nest.Js CRUD API for Signup and Login with JWT Access and Refresh Token.
 
