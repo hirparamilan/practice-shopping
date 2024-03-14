@@ -3,6 +3,11 @@
 /node_modules
 /build
 # uploads/
+# exclude everything
+uploads/*
+
+# exception to the rule
+!uploads/.gitkeep 
 
 # Logs
 logs
