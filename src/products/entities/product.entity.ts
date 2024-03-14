@@ -3,7 +3,7 @@ import mongoose, { Document } from 'mongoose';
 
 export type ProductDocument = Product & Document;
 
-@Schema()
+@Schema({ timestamps: true })
 export class Product {
   // @Prop({ type: mongoose.Types.ObjectId })
   _id: mongoose.Types.ObjectId;

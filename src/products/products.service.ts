@@ -47,90 +47,108 @@ export class ProductsService {
     };
   }
 
-  async findAll(userId: string) {
+  async findAll(userId: string, page, limit) {
+    console.log('page = ' + page);
+    console.log('limit = ' + limit);
+
+    const skip = (page - 1) * limit;
+    console.log('skip = ' + skip);
+
     const allProducts = await this.productModel
-      .aggregate([
-        {
-          $lookup: {
-            from: 'productlikes',
-            let: {
-              pId: '$_id',
-              uId: userId,
-            }, // collection name in db
-            pipeline: [
-              {
-                $match: {
-                  $expr: {
-                    $and: [
-                      // { $eq: [{ $toObjectId: '$productId' }, '$$pId'] },
-                      { $eq: ['$productId', { $toString: '$$pId' }] },
-                      { $eq: ['$userId', '$$uId'] },
-                    ],
-                  },
-                },
-              },
-            ],
-            as: 'likes',
-          },
+      .find()
+      // .aggregate([
+      //   {
+      //     $lookup: {
+      //       from: 'productlikes',
+      //       let: {
+      //         pId: '$_id',
+      //         uId: userId,
+      //       }, // collection name in db
+      //       pipeline: [
+      //         {
+      //           $match: {
+      //             $expr: {
+      //               $and: [
+      //                 // { $eq: [{ $toObjectId: '$productId' }, '$$pId'] },
+      //                 { $eq: ['$productId', { $toString: '$$pId' }] },
+      //                 { $eq: ['$userId', '$$uId'] },
+      //               ],
+      //             },
+      //           },
+      //         },
+      //       ],
+      //       as: 'likes',
+      //     },
 
-          // $lookup: {
-          //   from: 'productlikes',
-          //   let: {
-          //     productId: '$_id',
-          //     userId: { $toObjectId: userId },
-          //   },
-          //   pipeline: [
-          //     {
-          //       $match: {
-          //         $expr: {
-          //           $and: [
-          //             { $eq: ['$productId', '$$productId'] },
-          //             { $eq: ['$userId', '$$userId'] },
-          //           ],
-          //         },
-          //       },
-          //     },
-          //   ],
-          //   as: 'likes',
-          // },
-        },
-        // {
-        //   $addFields: {
-        //     isliked: {
-        //       $cond: {
-        //         if: { $gt: [{ $size: '$likes' }, 0] },
-        //         then: true,
-        //         else: false,
-        //       },
-        //     },
-        //   },
-        // },
-        {
-          $project: {
-            _id: 1,
-            name: 1,
-            description: 1,
-            category: 1,
-            amount: 1,
-            image: 1,
-            // likes: 1,
-            // isliked: 1,
-            isliked: {
-              $cond: {
-                if: { $gt: [{ $size: '$likes' }, 0] },
-                then: true,
-                else: false,
-              },
-            },
-          },
-        },
-      ])
+      //     // $lookup: {
+      //     //   from: 'productlikes',
+      //     //   let: {
+      //     //     productId: '$_id',
+      //     //     userId: { $toObjectId: userId },
+      //     //   },
+      //     //   pipeline: [
+      //     //     {
+      //     //       $match: {
+      //     //         $expr: {
+      //     //           $and: [
+      //     //             { $eq: ['$productId', '$$productId'] },
+      //     //             { $eq: ['$userId', '$$userId'] },
+      //     //           ],
+      //     //         },
+      //     //       },
+      //     //     },
+      //     //   ],
+      //     //   as: 'likes',
+      //     // },
+      //   },
+      //   // {
+      //   //   $addFields: {
+      //   //     isliked: {
+      //   //       $cond: {
+      //   //         if: { $gt: [{ $size: '$likes' }, 0] },
+      //   //         then: true,
+      //   //         else: false,
+      //   //       },
+      //   //     },
+      //   //   },
+      //   // },
+      //   {
+      //     $project: {
+      //       _id: 1,
+      //       name: 1,
+      //       description: 1,
+      //       category: 1,
+      //       amount: 1,
+      //       image: 1,
+      //       // likes: 1,
+      //       // isliked: 1,
+      //       isliked: {
+      //         $cond: {
+      //           if: { $gt: [{ $size: '$likes' }, 0] },
+      //           then: true,
+      //           else: false,
+      //         },
+      //       },
+      //     },
+      //   },
+      // ])
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(parseInt(limit))
       .exec();
+    console.log('all Products = ' + allProducts);
 
-    return {
-      status: HttpStatus.OK,
-      data: allProducts,
-    };
+    if (allProducts.length > 0) {
+      return {
+        status: HttpStatus.OK,
+        data: allProducts,
+      };
+    } else {
+      return {
+        status: HttpStatus.BAD_REQUEST,
+        message: 'Products not found',
+      };
+    }
   }
 
   async findByName(name: string): Promise<ProductDocument> {
