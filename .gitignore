@@ -4,10 +4,10 @@
 /build
 # uploads/
 # exclude everything
-uploads/*
+# uploads/*
 
 # exception to the rule
-!uploads/.gitkeep 
+# !uploads/.gitkeep 
 
 # Logs
 logs
